@@ -1,0 +1,105 @@
+# =============================================================================
+# Observability Stack - Complete Deployment
+# =============================================================================
+# Deploy all observability components at once
+# Usage: kubectl apply -f observability/stack/
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels:
+    name: observability
+---
+# ConfigMap for Prometheus
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: observability
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+      
+      - job_name: 'wallet-service'
+        metrics_path: /actuator/prometheus
+        scheme: http
+        scrape_interval: 10s
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+---
+# ConfigMap for Grafana Datasources
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: observability
+data:
+  datasources.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+        editable: true
+      - name: Jaeger
+        type: jaeger
+        access: proxy
+        url: http://jaeger:16686
+        editable: true
+---
+# ConfigMap for Grafana Dashboards
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: observability
+data:
+  dashboards.yml: |
+    apiVersion: 1
+    providers:
+      - name: 'Wallet Service'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        options:
+          path: /var/lib/grafana/dashboards
+---
+# Wallet Service Instrumentation ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wallet-service-observability
+  namespace: wallet-service
+data:
+  OTEL_SERVICE_NAME: "wallet-service"
+  OTEL_EXPORTER_JAEGER_ENDPOINT: "http://jaeger.observability.svc.cluster.local:4318/v1/traces"
+  OTEL_EXPORTER_JAEGER_INSECURE: "true"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_TRACES_EXPORTER: "jaeger"
+  OTEL_RESOURCE_ATTRIBUTES: "service.name=wallet-service,deployment.environment=production"

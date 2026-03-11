@@ -1,0 +1,12 @@
+# =============================================================================
+# Wallet Service - Kubernetes Namespace
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wallet-service
+  labels:
+    name: wallet-service
+    environment: production
+    team: platform

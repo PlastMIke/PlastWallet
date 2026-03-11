@@ -1,0 +1,18 @@
+# =============================================================================
+# Wallet Service - Pod Disruption Budget
+# =============================================================================
+# Ensure high availability during voluntary disruptions
+# =============================================================================
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: wallet-service-pdb
+  namespace: wallet-service
+  labels:
+    app: wallet-service
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: wallet-service

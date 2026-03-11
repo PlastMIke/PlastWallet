@@ -1,0 +1,334 @@
+# =============================================================================
+# Wallet Service - GitLab CI/CD Pipeline
+# =============================================================================
+# Stages: Test → Build → Deploy
+# =============================================================================
+
+stages:
+  - test
+  - build
+  - deploy
+
+# =============================================================================
+# Global Variables
+# =============================================================================
+variables:
+  APP_NAME: wallet-service
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE
+  DOCKER_TLS_CERTDIR: "/certs"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2 -DskipTests"
+  JAVA_VERSION: "17"
+
+# Cache Maven dependencies
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .m2/
+    - target/
+
+# =============================================================================
+# Stage: Test
+# =============================================================================
+
+# Unit Tests
+unit-tests:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-$JAVA_VERSION
+  tags:
+    - docker
+  script:
+    - echo "Running unit tests..."
+    - ./mvnw clean test -B -q
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+    coverage: '/Instructions: [0-9]+%/'
+    paths:
+      - target/surefire-reports/
+      - target/site/jacoco/jacoco.xml
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# Integration Tests
+integration-tests:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-$JAVA_VERSION
+  tags:
+    - docker
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script:
+    - docker info
+    - docker pull postgres:15-alpine
+    - docker pull redis:7-alpine
+    - >
+      docker run -d --name postgres 
+      -e POSTGRES_PASSWORD=postgres 
+      -e POSTGRES_DB=wallet_test 
+      -p 5432:5432 
+      postgres:15-alpine
+    - >
+      docker run -d --name redis 
+      -p 6379:6379 
+      redis:7-alpine
+    - sleep 10
+  script:
+    - echo "Running integration tests..."
+    - ./mvnw verify -Dtest='**/*IntegrationTest' -B
+  after_script:
+    - docker stop postgres redis || true
+    - docker rm postgres redis || true
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+    paths:
+      - target/surefire-reports/
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+  needs:
+    - unit-tests
+
+# Code Quality (SonarQube)
+sonarqube-check:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-$JAVA_VERSION
+  tags:
+    - docker
+  script:
+    - echo "Running SonarQube analysis..."
+    - >
+      ./mvnw clean verify sonar:sonar 
+      -Dsonar.projectKey=$CI_PROJECT_PATH_SLUG 
+      -Dsonar.host.url=$SONAR_HOST_URL 
+      -Dsonar.login=$SONAR_TOKEN 
+      -Dsonar.qualitygate.wait=true 
+      -B
+  variables:
+    SONAR_HOST_URL: "https://sonarqube.example.com"
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+  needs:
+    - unit-tests
+
+# =============================================================================
+# Stage: Build
+# =============================================================================
+
+# Build Docker Image
+build-image:
+  stage: build
+  image: docker:24.0.6
+  tags:
+    - docker
+  services:
+    - docker:24.0.6-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    DOCKER_REGISTRY: $CI_REGISTRY
+    DOCKER_IMAGE_TAG: $CI_COMMIT_SHA
+  before_script:
+    - docker info
+    - echo "Logging in to Docker registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - echo "Building Docker image..."
+    - docker build -t $DOCKER_IMAGE:$DOCKER_IMAGE_TAG -t $DOCKER_IMAGE:latest .
+    - echo "Pushing Docker image..."
+    - docker push $DOCKER_IMAGE:$DOCKER_IMAGE_TAG
+    - docker push $DOCKER_IMAGE:latest
+  after_script:
+    - docker logout $CI_REGISTRY
+  artifacts:
+    paths:
+      - docker-image-tag.txt
+    variables:
+      DOCKER_IMAGE_TAG: $DOCKER_IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+  needs:
+    - unit-tests
+    - integration-tests
+
+# Build JAR Artifact
+build-jar:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-$JAVA_VERSION
+  tags:
+    - docker
+  script:
+    - echo "Building JAR artifact..."
+    - ./mvnw clean package -DskipTests -B
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 year
+    name: "$APP_NAME-$CI_COMMIT_SHA"
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - unit-tests
+
+# =============================================================================
+# Stage: Deploy (Development)
+# =============================================================================
+
+deploy-dev:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  tags:
+    - kubernetes
+  environment:
+    name: development
+    url: https://dev.wallet.example.com
+  script:
+    - echo "Deploying to development environment..."
+    - kubectl config use-context $KUBE_CONTEXT_DEV
+    - kubectl set image deployment/$APP_NAME $APP_NAME=$DOCKER_IMAGE:$DOCKER_IMAGE_TAG -n $APP_NAME-dev
+    - kubectl rollout status deployment/$APP_NAME -n $APP_NAME-dev --timeout=300s
+  variables:
+    KUBE_CONTEXT_DEV: "dev-cluster"
+    DOCKER_IMAGE_TAG: $CI_COMMIT_SHA
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  needs:
+    - build-image
+  when: manual
+  allow_failure: false
+
+# =============================================================================
+# Stage: Deploy (Staging)
+# =============================================================================
+
+deploy-staging:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  tags:
+    - kubernetes
+  environment:
+    name: staging
+    url: https://staging.wallet.example.com
+  script:
+    - echo "Deploying to staging environment..."
+    - kubectl config use-context $KUBE_CONTEXT_STAGING
+    - kubectl set image deployment/$APP_NAME $APP_NAME=$DOCKER_IMAGE:$DOCKER_IMAGE_TAG -n $APP_NAME-staging
+    - kubectl rollout status deployment/$APP_NAME -n $APP_NAME-staging --timeout=300s
+    - sleep 30
+    - echo "Running smoke tests..."
+    - kubectl run smoke-test --rm -it --image=curlimages/curl --restart=Never -- curl -s http://$APP_NAME-staging/actuator/health
+  variables:
+    KUBE_CONTEXT_STAGING: "staging-cluster"
+    DOCKER_IMAGE_TAG: $CI_COMMIT_SHA
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - build-image
+  when: manual
+  allow_failure: false
+
+# =============================================================================
+# Stage: Deploy (Production)
+# =============================================================================
+
+deploy-production:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  tags:
+    - kubernetes
+  environment:
+    name: production
+    url: https://wallet.example.com
+  script:
+    - echo "Deploying to production environment..."
+    - kubectl config use-context $KUBE_CONTEXT_PROD
+    - kubectl set image deployment/$APP_NAME $APP_NAME=$DOCKER_IMAGE:$DOCKER_IMAGE_TAG -n $APP_NAME-prod
+    - kubectl rollout status deployment/$APP_NAME -n $APP_NAME-prod --timeout=600s
+    - sleep 60
+    - echo "Running production health checks..."
+    - kubectl run health-check --rm -it --image=curlimages/curl --restart=Never -- curl -s https://wallet.example.com/actuator/health
+  variables:
+    KUBE_CONTEXT_PROD: "prod-cluster"
+    DOCKER_IMAGE_TAG: $CI_COMMIT_TAG
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+  needs:
+    - deploy-staging
+  when: manual
+  allow_failure: false
+
+# =============================================================================
+# Cleanup Old Images
+# =============================================================================
+
+cleanup-images:
+  stage: deploy
+  image: docker:24.0.6
+  tags:
+    - docker
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - echo "Cleaning up old Docker images..."
+    - >
+      docker run --rm 
+      -e DOCKER_USER=$CI_REGISTRY_USER 
+      -e DOCKER_PASSWORD=$CI_REGISTRY_PASSWORD 
+      -e DOCKER_REGISTRY=$CI_REGISTRY 
+      -e IMAGE_NAME=$DOCKER_IMAGE 
+      -e KEEP_LAST_N=10 
+      martinohmann/docker-registry-gc:latest
+  after_script:
+    - docker logout $CI_REGISTRY
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: weekly
+  allow_failure: true
+
+# =============================================================================
+# Notifications
+# =============================================================================
+
+notify-slack:
+  stage: deploy
+  image: curlimages/curl:latest
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - |
+      if [ "$CI_JOB_STATUS" == "success" ]; then
+        COLOR="good"
+        EMOJI="✅"
+      else
+        COLOR="danger"
+        EMOJI="❌"
+      fi
+    - |
+      curl -X POST -H 'Content-type: application/json' --data "{
+        \"attachments\": [{
+          \"color\": \"$COLOR\",
+          \"title\": \"$EMOJI Deployment $CI_JOB_NAME\",
+          \"text\": \"Commit: $CI_COMMIT_SHORT_SHA\\nBranch: $CI_COMMIT_REF_NAME\\nAuthor: $GITLAB_USER_LOGIN\\nStatus: $CI_JOB_STATUS\",
+          \"footer\": \"GitLab CI/CD\",
+          \"ts\": $(date +%s)
+        }]
+      }" $SLACK_WEBHOOK_URL
+  rules:
+    - if: $SLACK_WEBHOOK_URL != null
+  when: on_failure
+  allow_failure: true

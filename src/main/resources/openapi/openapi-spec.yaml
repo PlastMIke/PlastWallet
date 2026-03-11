@@ -1,0 +1,957 @@
+openapi: 3.0.3
+info:
+  title: Wallet Service API
+  description: |
+    # Digital Wallet Service API
+    
+    A comprehensive REST API for managing digital wallets, transactions, and users.
+    
+    ## Features
+    
+    - **Wallet Management**: Create, retrieve, and manage digital wallets
+    - **Transactions**: Deposit, withdraw, and transfer funds
+    - **User Management**: User registration and authentication
+    - **Transaction History**: Query and filter transaction records
+    - **Notifications**: Real-time notifications via Kafka
+    
+    ## Authentication
+    
+    All API endpoints (except auth endpoints) require JWT Bearer token authentication.
+    Include the token in the Authorization header:
+    
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Rate Limiting
+    
+    - 100 requests per second per IP
+    - 1000 requests per minute per user
+    
+    ## Error Codes
+    
+    | Code | Description |
+    |------|-------------|
+    | 400  | Bad Request - Invalid input |
+    | 401  | Unauthorized - Invalid or missing token |
+    | 403  | Forbidden - Insufficient permissions |
+    | 404  | Not Found - Resource not found |
+    | 409  | Conflict - Resource already exists |
+    | 422  | Unprocessable Entity - Validation failed |
+    | 500  | Internal Server Error |
+    
+  version: 1.0.0
+  contact:
+    name: Wallet Service Team
+    email: support@wallet.service
+    url: https://wallet.service/support
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://api.wallet.service/v1
+    description: Production server
+  - url: https://staging-api.wallet.service/v1
+    description: Staging server
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: User registration and login endpoints
+  - name: Wallets
+    description: Wallet management operations
+  - name: Transactions
+    description: Transaction history and queries
+  - name: Users
+    description: User management operations
+
+security:
+  - bearerAuth: []
+
+paths:
+  # =============================================================================
+  # Authentication Endpoints
+  # =============================================================================
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Creates a new user account and returns JWT authentication token
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              name: John Doe
+              email: john.doe@example.com
+              password: SecurePass123!
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                success: true
+                message: User registered successfully
+                data:
+                  token: eyJhbGciOiJIUzI1NiJ9...
+                  tokenType: Bearer
+                  expiresIn: 86400000
+                statusCode: 200
+        '400':
+          description: Invalid input or user already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: User with this email already exists
+                statusCode: 400
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Authenticates user and returns JWT token
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              valid:
+                summary: Valid credentials
+                value:
+                  email: john.doe@example.com
+                  password: SecurePass123!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Invalid email or password
+                statusCode: 401
+
+  # =============================================================================
+  # Wallet Endpoints
+  # =============================================================================
+  /wallets:
+    post:
+      tags:
+        - Wallets
+      summary: Create wallet
+      description: Creates a new digital wallet for a user
+      operationId: createWallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+            examples:
+              usd:
+                summary: USD Wallet
+                value:
+                  userId: 1
+                  currency: USD
+              eur:
+                summary: EUR Wallet
+                value:
+                  userId: 2
+                  currency: EUR
+      responses:
+        '201':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '400':
+          description: User already has a wallet
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation failed
+
+    get:
+      tags:
+        - Wallets
+      summary: List all wallets
+      description: Retrieves all wallets (admin only)
+      operationId: listWallets
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: List of wallets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WalletDTO'
+
+  /wallets/{walletId}:
+    get:
+      tags:
+        - Wallets
+      summary: Get wallet by ID
+      description: Retrieves wallet details by unique identifier
+      operationId: getWallet
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+      responses:
+        '200':
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Wallet not found
+                statusCode: 404
+
+    delete:
+      tags:
+        - Wallets
+      summary: Delete wallet
+      description: Deletes a wallet (only if balance is zero)
+      operationId: deleteWallet
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+      responses:
+        '200':
+          description: Wallet deleted successfully
+        '400':
+          description: Cannot delete wallet with non-zero balance
+        '404':
+          description: Wallet not found
+
+  /wallets/user/{userId}:
+    get:
+      tags:
+        - Wallets
+      summary: Get wallet by user ID
+      description: Retrieves wallet for a specific user
+      operationId: getWalletByUserId
+      parameters:
+        - $ref: '#/components/parameters/UserIdParam'
+      responses:
+        '200':
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '404':
+          description: Wallet not found for user
+
+  /wallets/{walletId}/deposit:
+    post:
+      tags:
+        - Wallets
+      summary: Deposit funds
+      description: Adds funds to the wallet balance
+      operationId: depositFunds
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+            examples:
+              deposit:
+                summary: Deposit $100
+                value:
+                  amount: 100.00
+                  description: Initial deposit
+      responses:
+        '200':
+          description: Deposit successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Invalid amount (must be positive)
+        '404':
+          description: Wallet not found
+
+  /wallets/{walletId}/withdraw:
+    post:
+      tags:
+        - Wallets
+      summary: Withdraw funds
+      description: Removes funds from the wallet balance
+      operationId: withdrawFunds
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawRequest'
+            examples:
+              withdrawal:
+                summary: Withdraw $50
+                value:
+                  amount: 50.00
+                  description: ATM withdrawal
+      responses:
+        '200':
+          description: Withdrawal successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Invalid amount or insufficient balance
+        '404':
+          description: Wallet not found
+
+  /wallets/{fromWalletId}/transfer:
+    post:
+      tags:
+        - Wallets
+      summary: Transfer funds
+      description: Transfers funds from one wallet to another
+      operationId: transferFunds
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+            examples:
+              transfer:
+                summary: Transfer $25
+                value:
+                  toWalletId: 550e8400-e29b-41d4-a716-446655440001
+                  amount: 25.00
+                  description: Payment for services
+      responses:
+        '200':
+          description: Transfer successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Invalid amount, same wallet, or insufficient balance
+        '404':
+          description: Source or destination wallet not found
+
+  /wallets/{walletId}/transactions:
+    get:
+      tags:
+        - Wallets
+      summary: Get transaction history
+      description: Retrieves all transactions for a wallet
+      operationId: getTransactionHistory
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: type
+          in: query
+          description: Filter by transaction type
+          schema:
+            type: string
+            enum: [DEPOSIT, WITHDRAWAL, TRANSFER_IN, TRANSFER_OUT]
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [PENDING, COMPLETED, FAILED, CANCELLED]
+      responses:
+        '200':
+          description: Transaction history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionDTO'
+
+  # =============================================================================
+  # Transaction Endpoints
+  # =============================================================================
+  /transactions/{transactionId}:
+    get:
+      tags:
+        - Transactions
+      summary: Get transaction by ID
+      description: Retrieves a specific transaction
+      operationId: getTransaction
+      parameters:
+        - $ref: '#/components/parameters/TransactionIdParam'
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '404':
+          description: Transaction not found
+
+  /transactions/wallet/{walletId}:
+    get:
+      tags:
+        - Transactions
+      summary: Get transactions by wallet
+      description: All transactions where wallet is sender or receiver
+      operationId: getTransactionsByWallet
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+      responses:
+        '200':
+          description: Transactions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionDTO'
+
+  /transactions/wallet/{walletId}/status/{status}:
+    get:
+      tags:
+        - Transactions
+      summary: Get transactions by wallet and status
+      operationId: getTransactionsByWalletAndStatus
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+        - $ref: '#/components/parameters/StatusParam'
+      responses:
+        '200':
+          description: Filtered transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionDTO'
+
+  /transactions/date-range:
+    get:
+      tags:
+        - Transactions
+      summary: Get transactions by date range
+      operationId: getTransactionsByDateRange
+      parameters:
+        - $ref: '#/components/parameters/StartDateParam'
+        - $ref: '#/components/parameters/EndDateParam'
+      responses:
+        '200':
+          description: Transactions in date range
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionDTO'
+
+  /transactions/amount-range:
+    get:
+      tags:
+        - Transactions
+      summary: Get transactions by amount range
+      operationId: getTransactionsByAmountRange
+      parameters:
+        - name: minAmount
+          in: query
+          required: true
+          description: Minimum amount
+          schema:
+            type: number
+            format: decimal
+            example: 10.00
+        - name: maxAmount
+          in: query
+          required: true
+          description: Maximum amount
+          schema:
+            type: number
+            format: decimal
+            example: 1000.00
+      responses:
+        '200':
+          description: Filtered transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionDTO'
+
+  /transactions/stats/wallet/{walletId}:
+    get:
+      tags:
+        - Transactions
+      summary: Get wallet transaction statistics
+      operationId: getWalletTransactionStats
+      parameters:
+        - $ref: '#/components/parameters/WalletIdParam'
+      responses:
+        '200':
+          description: Transaction statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStats'
+
+  /transactions/recent:
+    get:
+      tags:
+        - Transactions
+      summary: Get recent transactions
+      operationId: getRecentTransactions
+      parameters:
+        - name: limit
+          in: query
+          description: Number of transactions
+          schema:
+            type: integer
+            default: 10
+            example: 20
+      responses:
+        '200':
+          description: Recent transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionDTO'
+
+components:
+  # =============================================================================
+  # Security Schemes
+  # =============================================================================
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+
+  # =============================================================================
+  # Parameters
+  # =============================================================================
+  parameters:
+    WalletIdParam:
+      name: walletId
+      in: path
+      required: true
+      description: Unique identifier of the wallet
+      schema:
+        type: string
+        format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+
+    UserIdParam:
+      name: userId
+      in: path
+      required: true
+      description: Unique identifier of the user
+      schema:
+        type: integer
+        format: int64
+        example: 1
+
+    TransactionIdParam:
+      name: transactionId
+      in: path
+      required: true
+      description: Unique identifier of the transaction
+      schema:
+        type: string
+        format: uuid
+        example: 15c5713b-b915-4ba3-a101-a7ee931898ac
+
+    StatusParam:
+      name: status
+      in: path
+      required: true
+      description: Transaction status
+      schema:
+        type: string
+        enum: [PENDING, COMPLETED, FAILED, CANCELLED]
+        example: COMPLETED
+
+    StartDateParam:
+      name: startDate
+      in: query
+      required: true
+      description: Start date (ISO-8601)
+      schema:
+        type: string
+        format: date-time
+        example: 2024-01-01T00:00:00Z
+
+    EndDateParam:
+      name: endDate
+      in: query
+      required: true
+      description: End date (ISO-8601)
+      schema:
+        type: string
+        format: date-time
+        example: 2024-12-31T23:59:59Z
+
+    PageParam:
+      name: page
+      in: query
+      description: Page number (0-indexed)
+      schema:
+        type: integer
+        default: 0
+        example: 0
+
+    SizeParam:
+      name: size
+      in: query
+      description: Page size
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+        example: 20
+
+  # =============================================================================
+  # Schemas
+  # =============================================================================
+  schemas:
+    # Request Schemas
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          format: password
+          example: SecurePass123!
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        password:
+          type: string
+          format: password
+          example: SecurePass123!
+
+    CreateWalletRequest:
+      type: object
+      required:
+        - userId
+        - currency
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: '^[A-Z]{3}$'
+          example: USD
+
+    DepositRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          example: 100.00
+        description:
+          type: string
+          maxLength: 255
+          example: Initial deposit
+
+    WithdrawRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          example: 50.00
+        description:
+          type: string
+          maxLength: 255
+          example: ATM withdrawal
+
+    TransferRequest:
+      type: object
+      required:
+        - toWalletId
+        - amount
+      properties:
+        toWalletId:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          example: 25.00
+        description:
+          type: string
+          maxLength: 255
+          example: Payment for services
+
+    # Response Schemas
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Login successful
+        data:
+          $ref: '#/components/schemas/JwtToken'
+        statusCode:
+          type: integer
+          example: 200
+
+    JwtToken:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiJ9...
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+          example: 86400000
+          description: Token expiration time in milliseconds
+
+    WalletResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Wallet created successfully
+        data:
+          $ref: '#/components/schemas/WalletDTO'
+        statusCode:
+          type: integer
+          example: 201
+
+    WalletDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        currency:
+          type: string
+          example: USD
+        balance:
+          type: number
+          format: decimal
+          example: 150.00
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T12:00:00Z
+
+    TransactionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Deposit completed successfully
+        data:
+          $ref: '#/components/schemas/TransactionDTO'
+        statusCode:
+          type: integer
+          example: 200
+
+    TransactionDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 15c5713b-b915-4ba3-a101-a7ee931898ac
+        fromWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          example: 550e8400-e29b-41d4-a716-446655440000
+        toWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          example: 550e8400-e29b-41d4-a716-446655440001
+        amount:
+          type: number
+          format: decimal
+          example: 100.00
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED, CANCELLED]
+          example: COMPLETED
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T12:00:00Z
+
+    TransactionStats:
+      type: object
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        totalAmount:
+          type: number
+          format: decimal
+        totalSent:
+          type: number
+          format: decimal
+        totalReceived:
+          type: number
+          format: decimal
+        transactionCount:
+          type: integer
+          format: int64
+
+    # Error Schemas
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Wallet not found
+        statusCode:
+          type: integer
+          example: 404
+        timestamp:
+          type: string
+          format: date-time
+
+    ValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Validation failed
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+        statusCode:
+          type: integer
+          example: 422
+
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          example: email
+        message:
+          type: string
+          example: Email is required
+        rejectedValue:
+          type: string
+          example: null

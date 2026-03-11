@@ -1,0 +1,53 @@
+# GitLab CI/CD - Environment Variables Template
+# Copy to GitLab CI/CD Variables (Settings → CI/CD → Variables)
+
+# =============================================================================
+# Docker Registry Configuration
+# =============================================================================
+DOCKER_REGISTRY=registry.gitlab.com
+DOCKER_IMAGE=${CI_PROJECT_PATH}/wallet-service
+
+# =============================================================================
+# SonarQube Configuration
+# =============================================================================
+SONAR_HOST_URL=https://sonarqube.example.com
+SONAR_TOKEN=your_sonarqube_token_here
+
+# =============================================================================
+# Kubernetes Configuration
+# =============================================================================
+KUBE_CONTEXT_DEV=dev-cluster
+KUBE_CONTEXT_STAGING=staging-cluster
+KUBE_CONTEXT_PROD=prod-cluster
+
+# Kubernetes namespace (optional - defaults to app name)
+KUBE_NAMESPACE_DEV=wallet-service-dev
+KUBE_NAMESPACE_STAGING=wallet-service-staging
+KUBE_NAMESPACE_PROD=wallet-service-prod
+
+# =============================================================================
+# Notification Configuration
+# =============================================================================
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+SLACK_CHANNEL=#wallet-service-deployments
+
+# =============================================================================
+# Database Configuration (for integration tests)
+# =============================================================================
+TEST_DATABASE_URL=jdbc:postgresql://localhost:5432/wallet_test
+TEST_DATABASE_USERNAME=postgres
+TEST_DATABASE_PASSWORD=postgres
+
+# =============================================================================
+# Feature Flags (optional)
+# =============================================================================
+ENABLE_SONARQUBE=true
+ENABLE_INTEGRATION_TESTS=true
+ENABLE_DEPLOYMENT_NOTIFICATIONS=true
+
+# =============================================================================
+# Deployment Configuration
+# =============================================================================
+DEPLOYMENT_TIMEOUT=300
+HEALTH_CHECK_TIMEOUT=60
+ROLLOUT_REVISION_HISTORY_LIMIT=10

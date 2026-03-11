@@ -1,0 +1,61 @@
+# =============================================================================
+# Wallet Service - ConfigMap
+# =============================================================================
+# Application configuration (non-sensitive)
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wallet-service-config
+  namespace: wallet-service
+  labels:
+    app: wallet-service
+data:
+  # Spring Configuration
+  SPRING_PROFILES_ACTIVE: "production"
+  
+  # Database Configuration
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service.wallet-service.svc.cluster.local:5432/wallet_db"
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  
+  # Redis Configuration
+  SPRING_DATA_REDIS_HOST: "redis-service.wallet-service.svc.cluster.local"
+  SPRING_DATA_REDIS_PORT: "6379"
+  
+  # Kafka Configuration
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka-service.wallet-service.svc.cluster.local:9092"
+  
+  # Kafka Topics
+  KAFKA_TOPICS_TRANSACTIONS: "wallet-transactions"
+  KAFKA_TOPICS_NOTIFICATIONS: "wallet-notifications"
+  
+  # Kafka Retry Configuration
+  KAFKA_RETRY_MAX_ATTEMPTS: "3"
+  KAFKA_RETRY_BACKOFF_MS: "1000"
+  
+  # Cache Configuration
+  CACHE_DEFAULT_TTL: "300"
+  CACHE_WALLETS_TTL: "300"
+  CACHE_USERS_TTL: "600"
+  CACHE_TRANSACTIONS_TTL: "120"
+  CACHE_BALANCES_TTL: "60"
+  
+  # Logging
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_COM_WALLET: "DEBUG"
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: "INFO"
+  
+  # Server Configuration
+  SERVER_PORT: "8080"
+  SERVER_SHUTDOWN: "graceful"
+  
+  # Management/Actuator
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+  MANAGEMENT_ENDPOINT_INFO_ENABLED: "true"
+  MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
+  
+  # Graceful Shutdown
+  SERVER_SHUTDOWN: "graceful"
+  SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: "30s"

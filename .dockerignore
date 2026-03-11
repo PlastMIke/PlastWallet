@@ -1,0 +1,79 @@
+# =============================================================================
+# Docker Ignore File
+# =============================================================================
+# Files and directories to exclude from Docker build context
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Docker Compose (not needed in build context)
+docker-compose*.yml
+
+# Documentation (optional - include if needed in image)
+docs/
+*.md
+!README.md
+
+# Test files (not needed in production image)
+src/test/
+
+# Development configuration
+.env
+.env.local
+.env.development
+
+# Kubernetes
+k8s/
+*.yaml
+!Dockerfile
+
+# Scripts (unless needed in runtime)
+scripts/
+
+# Backup files
+backups/
+*.bak
+
+# Coverage reports
+coverage/
+target/site/jacoco/
+
+# Checkstyle and other analysis reports
+target/checkstyle-*
+target/pmd-*
