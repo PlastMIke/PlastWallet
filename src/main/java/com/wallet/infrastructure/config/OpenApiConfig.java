@@ -13,11 +13,11 @@ public class OpenApiConfig {
     public OpenAPI walletServiceAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Wallet Service API")
-                        .description("Digital Wallet Service with Clean Architecture - REST API for managing wallets, transactions, and users")
+                        .title("PlastWallet API")
+                        .description("PlastWallet - Digital Wallet Service with Clean Architecture - REST API for managing wallets, transactions, and users")
                         .version("v1.0.0")
                         .contact(new Contact()
-                                .name("Wallet Service Team")
-                                .email("support@wallet.service")));
+                                .name("PlastWallet Team")
+                                .email("support@plastwallet.com")));
     }
 }

@@ -3,6 +3,7 @@ package com.wallet.infrastructure.alert;
 import com.wallet.infrastructure.telegram.TelegramNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthComponent;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.health.Status;
@@ -46,14 +47,15 @@ public class AlertService {
      */
     private void sendHealthAlert(HealthComponent health) {
         log.error("Health check failed! Sending Telegram alert...");
-        
+
         String alertName = "Service Health Check Failed";
         String severity = "CRITICAL";
+        String details = health instanceof Health h ? h.getDetails().toString() : "No details available";
         String description = String.format(
-                "Wallet Service health status changed to: %s\n\n" +
+                "PlastWallet health status changed to: %s\n\n" +
                 "Details: %s",
                 health.getStatus(),
-                health.getDetails()
+                details
         );
 
         telegramService.sendAlert(alertName, severity, description);
@@ -66,7 +68,7 @@ public class AlertService {
         log.info("Service recovered! Sending Telegram notification...");
         
         String message = "✅ <b>Service Recovered!</b>\n\n" +
-                "Wallet Service is back online and healthy.\n\n" +
+                "PlastWallet is back online and healthy.\n\n" +
                 "<i>Automatic recovery detected</i>";
         
         telegramService.sendMessage(message);

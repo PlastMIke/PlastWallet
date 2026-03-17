@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlastWallet | Цифровой Кошелёк</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.1) 0%, transparent 40%);
+            animation: bgMove 20s ease-in-out infinite;
+        }
+
+        @keyframes bgMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(5deg); }
+            66% { transform: translate(-20px, 20px) rotate(-5deg); }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            -webkit-text-fill-color: white;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-info {
+            text-align: right;
+            display: none;
+        }
+
+        .user-info.show {
+            display: block;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Auth Forms */
+        .auth-container {
+            max-width: 450px;
+            margin: 60px auto;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .auth-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .auth-tab:hover:not(.active) {
+            background: var(--bg-hover);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 18px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.show {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .stat-card.balance::before { background: var(--gradient-1); }
+        .stat-card.income::before { background: var(--gradient-3); }
+        .stat-card.expense::before { background: var(--gradient-2); }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card.balance .stat-icon { background: rgba(99, 102, 241, 0.2); }
+        .stat-card.income .stat-icon { background: rgba(16, 185, 129, 0.2); }
+        .stat-card.expense .stat-icon { background: rgba(239, 68, 68, 0.2); }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-change.positive { color: var(--success); }
+        .stat-change.negative { color: var(--danger); }
+
+        /* Actions Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .action-btn {
+            padding: 25px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-btn .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s;
+        }
+
+        .action-btn.deposit .icon { background: rgba(16, 185, 129, 0.2); }
+        .action-btn.withdraw .icon { background: rgba(239, 68, 68, 0.2); }
+        .action-btn.transfer .icon { background: rgba(99, 102, 241, 0.2); }
+        .action-btn.history .icon { background: rgba(59, 130, 246, 0.2); }
+
+        .action-btn:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .action-btn:hover .icon {
+            transform: scale(1.1);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg);
+            border: none;
+            color: var(--text);
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+        }
+
+        /* Wallet Card */
+        .wallet-card {
+            background: var(--gradient-1);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wallet-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .wallet-label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .wallet-balance {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .wallet-details {
+            display: flex;
+            gap: 30px;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        /* Transactions */
+        .transactions-section {
+            margin-top: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .transactions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 16px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .transaction-item:hover {
+            background: var(--bg-hover);
+            transform: translateX(5px);
+        }
+
+        .transaction-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .transaction-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .transaction-icon.deposit { background: rgba(16, 185, 129, 0.2); }
+        .transaction-icon.withdraw { background: rgba(239, 68, 68, 0.2); }
+        .transaction-icon.transfer { background: rgba(99, 102, 241, 0.2); }
+
+        .transaction-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .transaction-title {
+            font-weight: 500;
+        }
+
+        .transaction-date {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .transaction-amount.positive { color: var(--success); }
+        .transaction-amount.negative { color: var(--danger); }
+
+        /* Alert */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert.show {
+            display: flex;
+        }
+
+        .alert.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hide/Show */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .wallet-balance {
+                font-size: 32px;
+            }
+            
+            .modal {
+                margin: 20px;
+                padding: 30px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">💳</div>
+                <span>PlastWallet</span>
+            </div>
+            <div class="user-menu">
+                <div class="user-info" id="userInfo">
+                    <div class="user-name" id="userName">User Name</div>
+                    <div class="user-email" id="userEmail">user@example.com</div>
+                </div>
+                <button class="btn-logout hidden" id="btnLogout">Выйти</button>
+            </div>
+        </header>
+
+        <!-- Auth Section -->
+        <div class="auth-container" id="authSection">
+            <div class="card animate-in">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Вход</button>
+                    <button class="auth-tab" data-tab="register">Регистрация</button>
+                </div>
+
+                <div class="alert" id="authAlert"></div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" required placeholder="you@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        Войти →
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="hidden">
+                    <div class="form-group">
+                        <label>Имя</label>
+                        <input type="text" id="registerName" required placeholder="Иван Петров">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="registerEmail" required placeholder="you@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="registerPassword" required placeholder="минимум 8 символов" minlength="8">
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        Создать аккаунт →
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div class="dashboard" id="dashboardSection">
+            <!-- Wallet Card -->
+            <div class="wallet-card animate-in">
+                <div class="wallet-label">Общий баланс</div>
+                <div class="wallet-balance" id="totalBalance">$0.00</div>
+                <div class="wallet-details">
+                    <span>💰 <span id="walletCurrency">USD</span></span>
+                    <span>🆔 <span id="walletId">-</span></span>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card balance animate-in stagger-1">
+                    <div class="stat-icon">💵</div>
+                    <div class="stat-label">Баланс</div>
+                    <div class="stat-value" id="statBalance">$0.00</div>
+                    <div class="stat-change positive">↑ Активен</div>
+                </div>
+                <div class="stat-card income animate-in stagger-2">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-label">Доходы</div>
+                    <div class="stat-value" id="statIncome">$0.00</div>
+                    <div class="stat-change positive">↑ Этот месяц</div>
+                </div>
+                <div class="stat-card expense animate-in stagger-3">
+                    <div class="stat-icon">📉</div>
+                    <div class="stat-label">Расходы</div>
+                    <div class="stat-value" id="statExpense">$0.00</div>
+                    <div class="stat-change negative">↓ Этот месяц</div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions-grid">
+                <button class="action-btn deposit" onclick="openModal('deposit')">
+                    <div class="icon">💰</div>
+                    <span>Пополнить</span>
+                </button>
+                <button class="action-btn withdraw" onclick="openModal('withdraw')">
+                    <div class="icon">💸</div>
+                    <span>Вывести</span>
+                </button>
+                <button class="action-btn transfer" onclick="openModal('transfer')">
+                    <div class="icon">🔄</div>
+                    <span>Перевод</span>
+                </button>
+                <button class="action-btn history" onclick="scrollToTransactions()">
+                    <div class="icon">📜</div>
+                    <span>История</span>
+                </button>
+            </div>
+
+            <!-- Transactions -->
+            <div class="transactions-section" id="transactionsSection">
+                <div class="section-header">
+                    <h2 class="section-title">📋 Последние транзакции</h2>
+                </div>
+                <div class="card">
+                    <div class="transactions-list" id="transactionsList">
+                        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            Нет транзакций
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Операция</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="alert" id="modalAlert"></div>
+            <form id="modalForm">
+                <div id="modalFields"></div>
+                <button type="submit" class="btn-primary" id="modalSubmit">
+                    Подтвердить
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let state = {
+            token: localStorage.getItem('wallet_token'),
+            user: JSON.parse(localStorage.getItem('wallet_user') || 'null'),
+            wallet: null,
+            transactions: []
+        };
+
+        // User IDs (сопоставление email -> числовой ID)
+        const userIDs = {
+            'alice@plastwallet.com': 1,
+            'bob@plastwallet.com': 2,
+            'charlie@plastwallet.com': 3
+        };
+
+        // API Base URL
+        const API_BASE = '';
+
+        // Auth Tab Switching
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                if (tab.dataset.tab === 'login') {
+                    document.getElementById('loginForm').classList.remove('hidden');
+                    document.getElementById('registerForm').classList.add('hidden');
+                } else {
+                    document.getElementById('loginForm').classList.add('hidden');
+                    document.getElementById('registerForm').classList.remove('hidden');
+                }
+                hideAlert('authAlert');
+            });
+        });
+
+        // Show Alert
+        function showAlert(elementId, message, type) {
+            const alert = document.getElementById(elementId);
+            alert.className = `alert ${type} show`;
+            alert.textContent = message;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        function hideAlert(elementId) {
+            document.getElementById(elementId).classList.remove('show');
+        }
+
+        // Login Form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading"></span>';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success && data.data?.token) {
+                    state.token = data.data.token;
+                    state.user = { email: document.getElementById('loginEmail').value };
+                    localStorage.setItem('wallet_token', state.token);
+                    localStorage.setItem('wallet_user', JSON.stringify(state.user));
+                    showDashboard();
+                } else {
+                    showAlert('authAlert', data.message || 'Ошибка входа', 'error');
+                }
+            } catch (error) {
+                showAlert('authAlert', 'Ошибка подключения к серверу', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Register Form
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading"></span>';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('registerName').value,
+                        email: document.getElementById('registerEmail').value,
+                        password: document.getElementById('registerPassword').value
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success && data.data?.token) {
+                    state.token = data.data.token;
+                    state.user = { 
+                        email: document.getElementById('registerEmail').value,
+                        name: document.getElementById('registerName').value
+                    };
+                    localStorage.setItem('wallet_token', state.token);
+                    localStorage.setItem('wallet_user', JSON.stringify(state.user));
+                    showDashboard();
+                } else {
+                    showAlert('authAlert', data.message || 'Ошибка регистрации', 'error');
+                }
+            } catch (error) {
+                showAlert('authAlert', 'Ошибка подключения к серверу', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Show Dashboard
+        async function showDashboard() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('show');
+            document.getElementById('userInfo').classList.add('show');
+            document.getElementById('btnLogout').classList.remove('hidden');
+            
+            if (state.user?.name) {
+                document.getElementById('userName').textContent = state.user.name;
+            }
+            document.getElementById('userEmail').textContent = state.user?.email || '';
+
+            await loadWallet();
+            await loadTransactions();
+        }
+
+        // Load Wallet
+        async function loadWallet() {
+            try {
+                // Получаем ID пользователя из email
+                const userId = userIDs[state.user?.email];
+                if (!userId) {
+                    console.log('User ID not found');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/v1/wallets/user/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data) {
+                        state.wallet = data.data;
+                        updateWalletUI();
+                    }
+                }
+            } catch (error) {
+                console.log('Wallet not found, will create on first operation');
+            }
+        }
+
+        function updateWalletUI() {
+            if (state.wallet) {
+                document.getElementById('totalBalance').textContent = formatMoney(state.wallet.balance);
+                document.getElementById('statBalance').textContent = formatMoney(state.wallet.balance);
+                document.getElementById('walletCurrency').textContent = state.wallet.currency;
+                document.getElementById('walletId').textContent = 
+                    state.wallet.id ? `${state.wallet.id.slice(0, 8)}...` : '-';
+            }
+        }
+
+        // Load Transactions
+        async function loadTransactions() {
+            if (!state.wallet?.id) return;
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/api/v1/wallets/${state.wallet.id}/transactions`,
+                    { headers: { 'Authorization': `Bearer ${state.token}` } }
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    state.transactions = data.data || [];
+                    renderTransactions();
+                    updateStats();
+                }
+            } catch (error) {
+                console.log('No transactions yet');
+            }
+        }
+
+        function renderTransactions() {
+            const list = document.getElementById('transactionsList');
+            
+            if (!state.transactions || state.transactions.length === 0) {
+                list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">Нет транзакций</div>';
+                return;
+            }
+
+            list.innerHTML = state.transactions.slice(0, 10).map(tx => {
+                const isPositive = tx.fromWalletId === null || tx.fromWalletId !== state.wallet.id;
+                const type = isPositive ? 'deposit' : (tx.toWalletId ? 'transfer' : 'withdraw');
+                const icons = { deposit: '💰', withdraw: '💸', transfer: '🔄' };
+                
+                return `
+                    <div class="transaction-item">
+                        <div class="transaction-left">
+                            <div class="transaction-icon ${type}">${icons[type]}</div>
+                            <div class="transaction-info">
+                                <div class="transaction-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                                <div class="transaction-date">${new Date(tx.createdAt).toLocaleDateString('ru-RU')}</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                            ${isPositive ? '+' : '-'}${formatMoney(tx.amount)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            let income = 0, expense = 0;
+            
+            state.transactions.forEach(tx => {
+                if (tx.fromWalletId === null || tx.fromWalletId !== state.wallet.id) {
+                    income += tx.amount;
+                } else {
+                    expense += tx.amount;
+                }
+            });
+
+            document.getElementById('statIncome').textContent = formatMoney(income);
+            document.getElementById('statExpense').textContent = formatMoney(expense);
+        }
+
+        // Modal Functions
+        function openModal(type) {
+            const modal = document.getElementById('modalOverlay');
+            const title = document.getElementById('modalTitle');
+            const fields = document.getElementById('modalFields');
+            const submit = document.getElementById('modalSubmit');
+            
+            hideAlert('modalAlert');
+
+            const configs = {
+                deposit: {
+                    title: '💰 Пополнение счёта',
+                    submit: 'Пополнить',
+                    fields: `
+                        <div class="form-group">
+                            <label>Сумма</label>
+                            <input type="number" name="amount" step="0.01" min="0.01" required placeholder="100.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание (необязательно)</label>
+                            <input type="text" name="description" placeholder="Пополнение">
+                        </div>
+                    `
+                },
+                withdraw: {
+                    title: '💸 Вывод средств',
+                    submit: 'Вывести',
+                    fields: `
+                        <div class="form-group">
+                            <label>Сумма</label>
+                            <input type="number" name="amount" step="0.01" min="0.01" required placeholder="50.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание</label>
+                            <input type="text" name="description" required placeholder="Вывод средств">
+                        </div>
+                    `
+                },
+                transfer: {
+                    title: '🔄 Перевод',
+                    submit: 'Перевести',
+                    fields: `
+                        <div class="form-group">
+                            <label>ID кошелька получателя</label>
+                            <input type="text" name="toWalletId" required placeholder="xxxx-xxxx-xxxx">
+                        </div>
+                        <div class="form-group">
+                            <label>Сумма</label>
+                            <input type="number" name="amount" step="0.01" min="0.01" required placeholder="25.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание</label>
+                            <input type="text" name="description" required placeholder="Перевод">
+                        </div>
+                    `
+                }
+            };
+
+            const config = configs[type];
+            title.textContent = config.title;
+            submit.textContent = config.submit;
+            fields.innerHTML = config.fields;
+            
+            document.getElementById('modalForm').dataset.type = type;
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+
+        // Modal Form Submit
+        document.getElementById('modalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const type = e.target.dataset.type;
+            const btn = document.getElementById('modalSubmit');
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="loading"></span>';
+            btn.disabled = true;
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            const endpoints = {
+                deposit: `/api/v1/wallets/${state.wallet.id}/deposit`,
+                withdraw: `/api/v1/wallets/${state.wallet.id}/withdraw`,
+                transfer: `/api/v1/wallets/${state.wallet.id}/transfer`
+            };
+
+            const body = type === 'transfer' 
+                ? { toWalletId: data.toWalletId, amount: parseFloat(data.amount), description: data.description }
+                : { amount: parseFloat(data.amount), description: data.description };
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoints[type]}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.token}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('modalAlert', result.message || 'Успешно!', 'success');
+                    setTimeout(async () => {
+                        closeModal();
+                        await loadWallet();
+                        await loadTransactions();
+                    }, 1000);
+                } else {
+                    showAlert('modalAlert', result.message || 'Ошибка операции', 'error');
+                }
+            } catch (error) {
+                showAlert('modalAlert', 'Ошибка подключения к серверу', 'error');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Logout
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            state.token = null;
+            state.user = null;
+            state.wallet = null;
+            localStorage.removeItem('wallet_token');
+            localStorage.removeItem('wallet_user');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.remove('show');
+            document.getElementById('userInfo').classList.remove('show');
+            document.getElementById('btnLogout').classList.add('hidden');
+        });
+
+        // Scroll to Transactions
+        function scrollToTransactions() {
+            document.getElementById('transactionsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Utility
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        // Close modal on overlay click
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+
+        // Check auth on load
+        if (state.token) {
+            showDashboard();
+        }
+    </script>
+</body>
+</html>

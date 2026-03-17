@@ -38,7 +38,17 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/v3/api-docs/**",
-                    "/h2-console/**"
+                    "/h2-console/**",
+                    "/actuator/**",
+                    "/",
+                    "/index.html",
+                    "/**/*.html",
+                    "/**/*.css",
+                    "/**/*.js",
+                    "/**/*.png",
+                    "/**/*.jpg",
+                    "/**/*.svg",
+                    "/**/*.ico"
                 ).permitAll()
                 // H2 console needs special handling
                 .requestMatchers("/h2-console/**").permitAll()

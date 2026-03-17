@@ -17,9 +17,9 @@ public interface JpaWalletRepository extends JpaRepository<WalletEntity, UUID> {
     // Standard queries
     Optional<WalletEntity> findByUserId(Long userId);
     boolean existsByUserId(Long userId);
-    
+
     // Custom queries
-    
+
     /**
      * Find all wallets for a list of user IDs
      */
@@ -90,7 +90,7 @@ public interface JpaWalletRepository extends JpaRepository<WalletEntity, UUID> {
      */
     @Query("SELECT COUNT(w) > 0 FROM WalletEntity w WHERE w.userId = :userId AND w.currency = :currency")
     boolean existsByUserIdAndCurrency(@Param("userId") Long userId, @Param("currency") String currency);
-    
+
     /**
      * Find all wallets for a user sorted by creation date
      */

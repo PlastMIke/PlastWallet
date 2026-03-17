@@ -71,7 +71,7 @@ public class TelegramScheduledTasks {
         
         try {
             String message = "☀️ <b>Good Morning!</b>\n\n" +
-                    "Wallet Service is running smoothly.\n\n" +
+                    "PlastWallet is running smoothly.\n\n" +
                     "📊 <b>Overnight Stats:</b>\n" +
                     "• Transactions: 45\n" +
                     "• Volume: $12,345.67\n" +

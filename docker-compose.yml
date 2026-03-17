@@ -15,8 +15,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: wallet-service:latest
-    container_name: wallet-service
+    image: plast-wallet:latest
+    container_name: plast-wallet
     ports:
       - "8080:8080"
     environment:
@@ -38,7 +38,15 @@ services:
       # JWT Configuration
       - APP_JWT_SECRET=VGhpc0lzQVNlY3JldEtleUZvckpXVEF1dGhlbnRpY2F0aW9uU2VydmljZTIwMjQh
       - APP_JWT_EXPIRATION=86400000
-      
+
+      # Telegram Bot Configuration
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-PlastWalletMonitorBot}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      - TELEGRAM_NOTIFICATIONS_DAILY_REPORT_ENABLED=${TELEGRAM_NOTIFICATIONS_DAILY_REPORT_ENABLED:-true}
+      - TELEGRAM_NOTIFICATIONS_HEALTH_CHECK_ENABLED=${TELEGRAM_NOTIFICATIONS_HEALTH_CHECK_ENABLED:-true}
+      - TELEGRAM_NOTIFICATIONS_MORNING_SUMMARY_ENABLED=${TELEGRAM_NOTIFICATIONS_MORNING_SUMMARY_ENABLED:-true}
+
       # JVM Options
       - JAVA_OPTS=-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC
     depends_on:

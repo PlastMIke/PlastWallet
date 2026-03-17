@@ -1,9 +1,9 @@
-# 💼 Wallet Service
+# 💼 PlastWallet
 
 A modern, production-ready digital wallet service built with Spring Boot 3.5.0 and Clean Architecture principles.
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/wallet-service/ci.yml)](https://github.com/wallet-service/actions)
-[![Coverage Status](https://img.shields.io/codecov/c/github/wallet-service)](https://codecov.io/gh/wallet-service)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/plastwallet/ci.yml)](https://github.com/plastwallet/actions)
+[![Coverage Status](https://img.shields.io/codecov/c/github/plastwallet)](https://codecov.io/gh/plastwallet)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen)](https://spring.io/projects/spring-boot)
@@ -249,8 +249,8 @@ src/main/java/com/wallet/
 
 ```bash
 # Clone the repository
-git clone https://github.com/wallet-service/wallet-service.git
-cd wallet-service
+git clone https://github.com/plastwallet/plastwallet.git
+cd plastwallet
 
 # Start all services (app + databases)
 docker-compose up -d
@@ -691,7 +691,7 @@ git commit -m "feat: add amazing feature"
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ```
-Copyright 2024 Wallet Service Team
+Copyright 2024 PlastWallet Team
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -710,10 +710,10 @@ limitations under the License.
 
 ## 📞 Support
 
-- **Documentation:** [Wiki](https://github.com/wallet-service/wiki)
-- **Issues:** [GitHub Issues](https://github.com/wallet-service/issues)
-- **Email:** support@wallet.service
-- **Slack:** #wallet-service channel
+- **Documentation:** [Wiki](https://github.com/plastwallet/wiki)
+- **Issues:** [GitHub Issues](https://github.com/plastwallet/issues)
+- **Email:** support@plastwallet.com
+- **Slack:** #plastwallet channel
 
 ---
 
@@ -726,6 +726,6 @@ limitations under the License.
 
 ---
 
-**Made with ❤️ by the Wallet Service Team**
+**Made with ❤️ by the PlastWallet Team**
 
-![Wallet Service](https://img.shields.io/badge/Wallet-Service-blue?style=for-the-badge)
+![PlastWallet](https://img.shields.io/badge/Plast-Wallet-blue?style=for-the-badge)

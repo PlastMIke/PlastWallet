@@ -93,7 +93,7 @@ public class TelegramNotificationService {
     /**
      * Send daily report
      */
-    public void sendDailyReport(String date, String totalTransactions, String totalAmount, 
+    public void sendDailyReport(String date, String totalTransactions, String totalAmount,
                                  String newWallets, String errors) {
         String message = String.format(
                 "📊 <b>Daily Report</b>\n\n" +
@@ -107,6 +107,59 @@ public class TelegramNotificationService {
                 totalAmount,
                 newWallets,
                 errors
+        );
+        sendMessage(message);
+    }
+
+    /**
+     * Send transaction notification
+     */
+    public void sendTransactionNotification(String type, String amount, String status, String walletId) {
+        String emoji = switch (type.toLowerCase()) {
+            case "deposit" -> "💰";
+            case "withdrawal" -> "💸";
+            case "transfer" -> "💳";
+            default -> "💵";
+        };
+        String statusEmoji = "✅".equals(status) ? "✅" : "⏳";
+        String message = String.format(
+                "%s <b>Transaction Notification</b>\n\n" +
+                "<b>Type:</b> %s %s\n" +
+                "<b>Amount:</b> %s\n" +
+                "<b>Status:</b> %s %s\n" +
+                "<b>Wallet:</b> %s\n\n" +
+                "<i>Time:</i> %s",
+                emoji,
+                type,
+                emoji,
+                amount,
+                statusEmoji,
+                status,
+                walletId,
+                java.time.Instant.now()
+        );
+        sendMessage(message);
+    }
+
+    /**
+     * Send health status notification
+     */
+    public void sendHealthStatus(String serviceName, String status, String database, String redis) {
+        String statusEmoji = "UP".equals(status) ? "✅" : "❌";
+        String message = String.format(
+                "%s <b>Health Status</b>\n\n" +
+                "<b>Service:</b> %s\n" +
+                "<b>Status:</b> %s %s\n" +
+                "<b>Database:</b> %s\n" +
+                "<b>Redis:</b> %s\n\n" +
+                "<i>Time:</i> %s",
+                statusEmoji,
+                serviceName,
+                statusEmoji,
+                status,
+                database,
+                redis,
+                java.time.Instant.now()
         );
         sendMessage(message);
     }

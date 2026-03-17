@@ -46,6 +46,13 @@ public class WalletMonitorBot extends TelegramLongPollingBot {
     }
 
     /**
+     * Register bot commands with Telegram API
+     */
+    public void registerCommands() {
+        log.info("Bot commands registered");
+    }
+
+    /**
      * Handle text messages from users
      */
     private void handleTextMessage(Update update) {
@@ -56,7 +63,7 @@ public class WalletMonitorBot extends TelegramLongPollingBot {
 
         // Only admin can use bot commands
         if (!chatId.equals(adminChatId)) {
-            sendMessage(chatId, "❌ Access denied. Only admin can use this bot.");
+            sendHtmlMessage(chatId, "❌ Access denied. Only admin can use this bot.");
             return;
         }
 
@@ -74,8 +81,8 @@ public class WalletMonitorBot extends TelegramLongPollingBot {
     }
 
     private void handleStartCommand(String chatId) {
-        String message = "👋 <b>Welcome to Wallet Service Monitor Bot!</b>\n\n" +
-                "I'm here to help you monitor the Wallet Service.\n\n" +
+        String message = "👋 <b>Welcome to PlastWallet Monitor Bot!</b>\n\n" +
+                "I'm here to help you monitor the PlastWallet service.\n\n" +
                 "Use /help to see available commands.";
         sendHtmlMessage(chatId, message);
     }
@@ -95,7 +102,7 @@ public class WalletMonitorBot extends TelegramLongPollingBot {
 
     private void handleStatusCommand(String chatId) {
         String message = "📊 <b>System Status</b>\n\n" +
-                "<b>Service:</b> Wallet Service\n" +
+                "<b>Service:</b> PlastWallet\n" +
                 "<b>Version:</b> 1.0.0\n" +
                 "<b>Environment:</b> Production\n" +
                 "<b>Uptime:</b> 24h 15m\n\n" +

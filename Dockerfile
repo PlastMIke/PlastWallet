@@ -33,17 +33,17 @@ RUN ./mvnw clean package -DskipTests -B -q
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime Stage (Production Image)
 # -----------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre-alpine AS runtime
+FROM eclipse-temurin:17-jre AS runtime
 
 # Labels for image metadata
-LABEL maintainer="Wallet Service Team"
+LABEL maintainer="PlastWallet Team"
 LABEL version="0.0.1-SNAPSHOT"
-LABEL description="Digital Wallet Service with Clean Architecture"
+LABEL description="PlastWallet - Digital Wallet Service with Clean Architecture"
 LABEL organization="PlastWallet"
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -r appuser -G appgroup
 
 WORKDIR /app
 
@@ -91,14 +91,14 @@ ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 # -----------------------------------------------------------------------------
 # Stage 3: Debug Image (Optional - for debugging production issues)
 # -----------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre-alpine AS debug
+FROM eclipse-temurin:17-jre AS debug
 
-LABEL maintainer="Wallet Service Team"
+LABEL maintainer="PlastWallet Team"
 LABEL version="0.0.1-SNAPSHOT"
-LABEL description="Debug version with JDWP enabled"
+LABEL description="PlastWallet - Debug version with JDWP enabled"
 
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -r appuser -G appgroup
 
 WORKDIR /app
 

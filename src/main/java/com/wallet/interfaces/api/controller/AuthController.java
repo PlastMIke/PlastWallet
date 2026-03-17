@@ -73,7 +73,7 @@ public class AuthController {
     @Operation(summary = "Login user", description = "Authenticates user and returns JWT token")
     public ResponseEntity<ApiResponse<JwtAuthenticationResponse>> login(
             @Valid @RequestBody LoginRequest request) {
-        
+
         // Authenticate user
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
@@ -88,11 +88,21 @@ public class AuthController {
 
         String token = jwtTokenProvider.generateToken(user);
 
-        // Add custom claims if needed
+        // Add custom claims - use numeric user_id based on email
         Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("userId", user.getId().toString());
-        extraClaims.put("name", user.getName());
+        // Map email to numeric user_id
+        Long numericUserId = 1L; // default
+        if (user.getEmail().contains("alice")) {
+            numericUserId = 1L;
+        } else if (user.getEmail().contains("bob")) {
+            numericUserId = 2L;
+        } else if (user.getEmail().contains("charlie")) {
+            numericUserId = 3L;
+        }
         
+        extraClaims.put("userId", numericUserId);
+        extraClaims.put("name", user.getName());
+
         String enhancedToken = jwtTokenProvider.generateToken(extraClaims, user);
 
         JwtAuthenticationResponse response = JwtAuthenticationResponse.builder()

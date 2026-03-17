@@ -91,14 +91,14 @@ public class RedisConfig {
      * Cache manager with TTL configuration
      */
     @Bean
-    public CacheManager cacheManager() {
+    public CacheManager redisCacheManager() {
         // JSON serializer for cache values
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-        GenericJackson2JsonRedisSerializer jsonSerializer = 
+        GenericJackson2JsonRedisSerializer jsonSerializer =
                 new GenericJackson2JsonRedisSerializer(objectMapper);
 
         // Default cache configuration with TTL

@@ -14,7 +14,7 @@ public interface WalletPort {
     Optional<Wallet> findById(UUID id);
     Optional<Wallet> findByUserId(Long userId);
     boolean existsByUserId(Long userId);
-    
+
     // Custom queries
     List<Wallet> findAllByUserIds(List<Long> userIds);
     List<Wallet> findByCurrency(String currency);
