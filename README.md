@@ -2,8 +2,7 @@
 
 A modern, production-ready digital wallet service built with Spring Boot 3.5.0 and Clean Architecture principles.
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/plastwallet/ci.yml)](https://github.com/plastwallet/actions)
-[![Coverage Status](https://img.shields.io/codecov/c/github/plastwallet)](https://codecov.io/gh/plastwallet)
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen)](https://spring.io/projects/spring-boot)
