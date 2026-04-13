@@ -6,24 +6,24 @@ This folder contains complete documentation for the Wallet Service project.
 
 ## 📚 Available Documents
 
-| File | Description | Size |
-|------|-------------|------|
-| [`PROJECT_DOCUMENTATION.md`](./PROJECT_DOCUMENTATION.md) | Complete project reference documentation | ~17 KB |
-| [`DEVELOPMENT_LOG.md`](./DEVELOPMENT_LOG.md) | Detailed development session log | ~14 KB |
+| File                                                   | Description | Size |
+|--------------------------------------------------------|-------------|------|
+| [`ИНДЕКС_ДОКУМЕНТАЦИИ.md`](./PROJECT_DOCUMENTATION.md) | Complete project reference documentation | ~17 KB |
+| [`ИСТОРИЯ_РАЗРАБОТКИ.md`](./DEVELOPMENT_LOG.md)        | Detailed development session log | ~14 KB |
 
 ---
 
 ## 📖 Quick Reference
 
 ### For New Developers
-Start with **PROJECT_DOCUMENTATION.md** - contains:
+Start with **ИНДЕКС_ДОКУМЕНТАЦИИ.md** - contains:
 - Project structure
 - Architecture overview
 - Getting started guide
 - API documentation
 
 ### For Project Maintainers
-Review **DEVELOPMENT_LOG.md** - contains:
+Review **ИСТОРИЯ_РАЗРАБОТКИ.md** - contains:
 - Complete session timeline
 - All changes made
 - Issues and resolutions
