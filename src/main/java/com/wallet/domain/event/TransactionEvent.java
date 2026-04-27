@@ -14,7 +14,6 @@ import java.util.UUID;
  */
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class TransactionEvent {
     private UUID id;

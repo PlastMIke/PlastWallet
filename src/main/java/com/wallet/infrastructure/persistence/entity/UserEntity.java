@@ -16,7 +16,6 @@ import java.util.UUID;
 })
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class UserEntity {
     @Id
