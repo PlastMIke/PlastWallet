@@ -11,7 +11,6 @@ import java.util.UUID;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class Transaction {
     private UUID id;
